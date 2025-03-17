@@ -48,5 +48,6 @@ export default {
       "SECRET_GSC": process.env.SECRET_GSC,
       "GOOGLE_API": process.env.GOOGLE_API,
     },
+    "owner": "alisonsarto"
   }
 };
