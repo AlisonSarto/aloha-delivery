@@ -1,5 +1,4 @@
 import { Button, ScrollView, Text, View, XStack, YStack, Separator } from 'tamagui';
-import Map, { Marker } from 'react-native-maps';
 import React, { useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator } from 'react-native';
@@ -252,14 +251,6 @@ const Entrega = ({ pedido, coordenadas, endereco }) => {
 
       <View my="$1" />
       <Text fontSize={30} fontWeight={700}>Endereço</Text>
-      <View my="$3" />
-      {coordenadas && coordenadas.latitude && coordenadas.longitude ? (
-        <Map style={{ height: 300 }} initialRegion={coordenadas}>
-          <Marker coordinate={coordenadas} />
-        </Map>
-      ) : (
-        <Text fontSize="$6">Endereço não disponível</Text>
-      )}
       <View my="$3" />
       <Text fontSize="$6">{endereco}</Text>
     </>

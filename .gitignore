@@ -19,6 +19,7 @@ android/
 *.p8
 *.p12
 *.key
+.idea/
 *.mobileprovision
 
 # Tamagui
