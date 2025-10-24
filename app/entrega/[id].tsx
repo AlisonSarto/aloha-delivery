@@ -9,7 +9,6 @@ export default function EntregaPage() {
   const id = useLocalSearchParams().id;
   const [data, setData] = useState(null);
   const [endereco, setEndereco] = useState<string | null>(null);
-  const [coordenadas, setCoordenadas] = useState(null);
   const [loading, setLoading] = useState(true);
   const [entregaSalva, setEntregaSalva] = useState(false);
   const [loadingBtn, setLoadingBtn] = useState(false);
@@ -34,7 +33,6 @@ export default function EntregaPage() {
     try {
       const token = Constants.expoConfig?.extra?.TOKEN_GSC ?? null;
       const secret = Constants.expoConfig?.extra?.SECRET_GSC ?? null;
-      const google_api_key = Constants.expoConfig?.extra?.GOOGLE_API ?? null;
 
       if (!token || !secret) throw new Error('Token ou secret não configurados');
 
@@ -62,18 +60,7 @@ export default function EntregaPage() {
 
       const enderecoObj = clienteData.data.enderecos[0].endereco;
       const enderecoInvalido = !enderecoObj.logradouro || !enderecoObj.numero || !enderecoObj.bairro || !enderecoObj.nome_cidade || !enderecoObj.estado || !enderecoObj.cep;
-      var enderecoFormatado = `${enderecoObj.logradouro}, ${enderecoObj.numero} - ${enderecoObj.bairro}, ${enderecoObj.nome_cidade} - ${enderecoObj.estado}, ${enderecoObj.cep}`;
-
-      if (enderecoInvalido) {
-        enderecoFormatado = '';
-        setCoordenadas({ latitude: null, longitude: null, latitudeDelta: null, longitudeDelta: null });
-      } else {
-        const geoResponse = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${enderecoFormatado}&key=${google_api_key}`);
-        const geoData = await geoResponse.json();
-        const location = geoData.results[0].geometry.location;
-
-        setCoordenadas({ latitude: location.lat, longitude: location.lng, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
-      }
+      var enderecoFormatado = enderecoInvalido ? '' : `${enderecoObj.logradouro}, ${enderecoObj.numero} - ${enderecoObj.bairro}, ${enderecoObj.nome_cidade} - ${enderecoObj.estado}, ${enderecoObj.cep}`;
 
       setData(vendaData.data);
       setLoading(false);
@@ -165,37 +152,35 @@ export default function EntregaPage() {
     <>
       <ScrollView>
         <View flex={1} m="$5">
-          {loading ? <ActivityIndicator size="large" color="#0000ff" /> : <Entrega pedido={data} coordenadas={coordenadas} endereco={endereco} />}
+          {loading ? <ActivityIndicator size="large" color="#0000ff" /> : <Entrega pedido={data} endereco={endereco} />}
         </View>
       </ScrollView>
 
-      {coordenadas && coordenadas.latitude && coordenadas.longitude ? (
-        <Button
-          animation="bouncy"
-          borderWidth={0}
-          borderColor="blue"
-          mx="$4"
-          mb="$3"
-          size="$6"
-          backgroundColor={emRota ? "$blue8" : entregaSalva ? "$red8" : "$green8"}
-          pressStyle={{ backgroundColor: emRota ? "$blue9" : entregaSalva ? "$red9" : "$green9" }}
-          onPress={toggleEntrega}
-          disabled={loadingBtn}
-        >
-          {loadingBtn ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Button.Text fontSize="$7" fontWeight={700}>
-              {emRota ? 'Finalizar entrega' : entregaSalva ? 'Remover entrega' : 'Adicionar entrega'}
-            </Button.Text>
-          )}
-        </Button>
-      ) : null}
+      <Button
+        animation="bouncy"
+        borderWidth={0}
+        borderColor="blue"
+        mx="$4"
+        mb="$3"
+        size="$6"
+        backgroundColor={emRota ? "$blue8" : entregaSalva ? "$red8" : "$green8"}
+        pressStyle={{ backgroundColor: emRota ? "$blue9" : entregaSalva ? "$red9" : "$green9" }}
+        onPress={toggleEntrega}
+        disabled={loadingBtn}
+      >
+        {loadingBtn ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Button.Text fontSize="$7" fontWeight={700}>
+            {emRota ? 'Finalizar entrega' : entregaSalva ? 'Remover entrega' : 'Adicionar entrega'}
+          </Button.Text>
+        )}
+      </Button>
     </>
   );
 }
 
-const Entrega = ({ pedido, coordenadas, endereco }) => {
+const Entrega = ({ pedido, endereco }) => {
   const formatDate = (dateString) => {
     const [year, month, day] = dateString.split('-');
     return `${day}/${month}/${year}`;

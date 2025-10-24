@@ -26,7 +26,7 @@ Antes de iniciar, certifique-se de ter instalado:
 
 3. Inicie o servidor de desenvolvimento:
    ```sh
-   expo start
+   npx expo start
    ```
 
 4. No seu dispositivo móvel, escaneie o QR Code com o aplicativo Expo Go ou execute no emulador.
