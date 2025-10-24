@@ -1,15 +1,17 @@
 import { 
-  Text, View, ScrollView, Card, YStack, H3, Paragraph, XStack, Button, Separator 
+  Text, View, YStack, H3, Button 
 } from 'tamagui';
-import { ChevronRight, CircleUser } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
-import { Linking } from 'react-native';
+import { Linking, RefreshControl } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useCallback } from 'react';
-import { ActivityIndicator, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
+import * as Animatable from 'react-native-animatable';
+import AnimatedCard from '../../components/AnimatedCard';
+import SkeletonCard from '../../components/SkeletonCard';
 
 // Função utilitária para verificar se uma data é igual à de hoje
 const isSameDay = (dateString: string) => {
@@ -17,23 +19,6 @@ const isSameDay = (dateString: string) => {
   const [year, month, day] = dateString.split('-');
   const deliveryDate = new Date(Number(year), Number(month) - 1, Number(day));
   return today.toDateString() === deliveryDate.toDateString();
-};
-
-// Componente de cada cartão de entrega
-const CardEntrega = ({ id, cliente }: { id: number, cliente: string }) => {
-  const router = useRouter();
-
-  return (
-    <Card size="$4" bordered m="$3" my="$2" flex={1} pressStyle={{ scale: 0.95 }} onPress={() => router.push(`/entrega/${id}`)}>
-      <Card.Header>
-        <XStack>
-          <CircleUser size={28} marginEnd="$2" />
-          <Paragraph size="$5" fontWeight="bold" flex={1}>{cliente}</Paragraph>
-          <ChevronRight />
-        </XStack>
-      </Card.Header>
-    </Card>
-  );
 };
 
 // Função para iniciar as rotas no Google Maps
@@ -160,41 +145,85 @@ export default function Entregas() {
 
   if (loading) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" bg="$background">
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View flex={1} bg="$background" pt="$4">
+        <YStack>
+          {[...Array(4)].map((_, index) => (
+            <SkeletonCard key={index} index={index} />
+          ))}
+        </YStack>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" bg="$background">
-        <Text color="red">{error}</Text>
-        <Button onPress={fetchEntregas}>Tentar Novamente</Button>
+      <View flex={1} justifyContent="center" alignItems="center" bg="$background" p="$4">
+        <Animatable.View animation="shake" duration={500}>
+          <Text color="red" textAlign="center" fontSize={16}>{error}</Text>
+        </Animatable.View>
       </View>
     );
   }
 
   return (
     <>
-      <ScrollView flex={1} bg="$background" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchEntregas} />}>
-        <YStack flex={1}>
-          {entregas.length > 0 ? (
-            entregas.map((entrega) => (
-              <CardEntrega key={entrega.id} id={entrega.id} cliente={entrega.nome_cliente} />
-            ))
-          ) : (
-            <View flex={1} justifyContent="center" alignItems="center">
-              <H3 textAlign="center">Nenhuma entrega encontrada</H3>
-            </View>
-          )}
-        </YStack>
-      </ScrollView>
-      {entregas.length > 0 ? (
-        <Button animation="bouncy" mx="$4" mb="$3" size="$6" backgroundColor="$blue8" pressStyle={{ backgroundColor: '$blue9' }} onPress={iniciarRotas}>
-          <Button.Text fontSize="$7" fontWeight={700}>Iniciar rotas</Button.Text>
-        </Button>
-      ) : null}
+      <View flex={1} bg="$background">
+        {entregas.length > 0 ? (
+          <FlashList
+            data={entregas}
+            estimatedItemSize={100}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item, index }) => (
+              <AnimatedCard
+                key={item.id}
+                id={item.id}
+                cliente={item.nome_cliente}
+                onPress={() => router.push(`/entrega/${item.id}`)}
+                index={index}
+              />
+            )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={fetchEntregas} />
+            }
+          />
+        ) : (
+          <Animatable.View 
+            animation="fadeIn" 
+            duration={600}
+            style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+          >
+            <H3 textAlign="center" color="$gray10">Nenhuma entrega encontrada</H3>
+          </Animatable.View>
+        )}
+      </View>
+      {entregas.length > 0 && (
+        <Animatable.View animation="bounceIn" duration={800} delay={300}>
+          <Button 
+            animation="bouncy" 
+            mx="$4" 
+            mb="$3" 
+            size="$6" 
+            backgroundColor="$blue9" 
+            pressStyle={{ 
+              backgroundColor: '$blue10',
+              scale: 0.98 
+            }}
+            hoverStyle={{
+              backgroundColor: '$blue8'
+            }}
+            onPress={iniciarRotas}
+            borderRadius="$10"
+            elevate
+            shadowColor="$blue9"
+            shadowOpacity={0.3}
+            shadowRadius={10}
+          >
+            <Button.Text fontSize="$7" fontWeight={700}>
+              🚀 Iniciar rotas
+            </Button.Text>
+          </Button>
+        </Animatable.View>
+      )}
     </>
   );
 }

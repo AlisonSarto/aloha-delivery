@@ -1,9 +1,10 @@
-import { Button, ScrollView, Text, View, XStack, YStack, Separator } from 'tamagui';
+import { Button, ScrollView, Text, View, XStack, YStack, Separator, Card, H2 } from 'tamagui';
 import React, { useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+import { MapPin, Package, Calendar, User } from '@tamagui/lucide-icons';
 
 export default function EntregaPage() {
   const id = useLocalSearchParams().id;
@@ -150,32 +151,57 @@ export default function EntregaPage() {
 
   return (
     <>
-      <ScrollView>
+      <ScrollView bg="$background">
         <View flex={1} m="$5">
-          {loading ? <ActivityIndicator size="large" color="#0000ff" /> : <Entrega pedido={data} endereco={endereco} />}
+          {loading ? (
+            <Animatable.View animation="pulse" iterationCount="infinite" duration={1500}>
+              <Card bordered p="$5" backgroundColor="$background">
+                <YStack space="$4">
+                  <View backgroundColor="$gray4" height={30} borderRadius="$3" />
+                  <View backgroundColor="$gray3" height={20} borderRadius="$3" width="60%" />
+                  <View backgroundColor="$gray3" height={20} borderRadius="$3" width="80%" />
+                </YStack>
+              </Card>
+            </Animatable.View>
+          ) : (
+            <Entrega pedido={data} endereco={endereco} />
+          )}
         </View>
       </ScrollView>
 
-      <Button
-        animation="bouncy"
-        borderWidth={0}
-        borderColor="blue"
-        mx="$4"
-        mb="$3"
-        size="$6"
-        backgroundColor={emRota ? "$blue8" : entregaSalva ? "$red8" : "$green8"}
-        pressStyle={{ backgroundColor: emRota ? "$blue9" : entregaSalva ? "$red9" : "$green9" }}
-        onPress={toggleEntrega}
-        disabled={loadingBtn}
-      >
-        {loadingBtn ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <Button.Text fontSize="$7" fontWeight={700}>
-            {emRota ? 'Finalizar entrega' : entregaSalva ? 'Remover entrega' : 'Adicionar entrega'}
-          </Button.Text>
-        )}
-      </Button>
+      <Animatable.View animation="slideInUp" duration={600} delay={200}>
+        <Button
+          animation="bouncy"
+          borderWidth={0}
+          mx="$4"
+          mb="$3"
+          size="$6"
+          backgroundColor={emRota ? "$blue9" : entregaSalva ? "$red9" : "$green9"}
+          pressStyle={{ 
+            backgroundColor: emRota ? "$blue10" : entregaSalva ? "$red10" : "$green10",
+            scale: 0.98 
+          }}
+          hoverStyle={{
+            backgroundColor: emRota ? "$blue8" : entregaSalva ? "$red8" : "$green8"
+          }}
+          onPress={toggleEntrega}
+          disabled={loadingBtn}
+          borderRadius="$10"
+          elevate
+          shadowOpacity={0.3}
+          shadowRadius={10}
+        >
+          {loadingBtn ? (
+            <Animatable.View animation="rotate" iterationCount="infinite" duration={1000}>
+              <Text color="white">⏳</Text>
+            </Animatable.View>
+          ) : (
+            <Button.Text fontSize="$7" fontWeight={700}>
+              {emRota ? '✅ Finalizar entrega' : entregaSalva ? '❌ Remover entrega' : '➕ Adicionar entrega'}
+            </Button.Text>
+          )}
+        </Button>
+      </Animatable.View>
     </>
   );
 }
@@ -197,47 +223,124 @@ const Entrega = ({ pedido, endereco }) => {
   const qtd_total = pacotes.reduce((acc, pacote) => acc + parseInt(pacote.quantidade), 0);
 
   return (
-    <>
-      <Text fontWeight={700} fontSize="$9" textAlign="center">Nº {pedido.codigo}</Text>
-      <View my="$4" />
-      <XStack>
-        <Text fontSize="$7" fontWeight={700}>Cliente:</Text>
-        <Text fontSize="$7" marginStart="$2">{pedido.nome_cliente}</Text>
-      </XStack>
-      <View my='$1' />
-      <XStack>
-        <Text fontSize="$7" fontWeight={700}>Data de entrega:</Text>
-        <Text fontSize="$7" marginStart="$2">{pedido.prazo_entrega ? formatDate(pedido.prazo_entrega) : 'Sem data'}</Text>
-      </XStack>
+    <Animatable.View animation="fadeIn" duration={600}>
+      <YStack space="$5">
+        {/* Cabeçalho com número do pedido */}
+        <Animatable.View animation="bounceIn" duration={800} delay={100}>
+          <Card 
+            bordered 
+            backgroundColor="$blue2" 
+            borderColor="$blue6"
+            p="$4"
+            borderRadius="$6"
+            elevate
+          >
+            <Text fontWeight={700} fontSize="$9" textAlign="center" color="$blue11">
+              Pedido Nº {pedido.codigo}
+            </Text>
+          </Card>
+        </Animatable.View>
 
-      <View my="$3" />
-      <Text fontSize={30} fontWeight={700}>Pacotes</Text>
-      <YStack my="$4">
-        <XStack justifyContent="space-between">
-          <Text fontSize="$7" fontWeight={700}>Sabor</Text>
-          <Text fontSize="$7" fontWeight={700}>Quantidade</Text>
-        </XStack>
-        <Separator my="$2" />
-        {pacotes.map((pacote, index) => (
-          <React.Fragment key={index}>
-            <XStack justifyContent="space-between">
-              <Text fontSize="$6">GELO DE {pacote.nome}</Text>
-              <Text fontSize="$7">{pacote.quantidade}</Text>
-            </XStack>
-            <Separator my="$2" key={`separator-${index}`} />
-          </React.Fragment>
-        ))}
-        <XStack justifyContent="space-between">
-          <Text fontSize="$6" fontWeight={700}>Total:</Text>
-          <Text fontSize="$7" fontWeight={700}>{qtd_total}</Text>
-        </XStack>
-        <Separator my="$2" />
+        {/* Card de Informações do Cliente */}
+        <Animatable.View animation="fadeInRight" duration={600} delay={200}>
+          <Card bordered p="$4" backgroundColor="$background" borderRadius="$6" elevate>
+            <YStack space="$3">
+              <XStack alignItems="center" space="$2">
+                <YStack backgroundColor="$green2" p="$2" borderRadius="$10">
+                  <User size={24} color="$green10" />
+                </YStack>
+                <YStack flex={1}>
+                  <Text fontSize="$5" fontWeight={600} color="$gray11">Cliente</Text>
+                  <Text fontSize="$6" fontWeight={700}>{pedido.nome_cliente}</Text>
+                </YStack>
+              </XStack>
+              
+              <Separator />
+              
+              <XStack alignItems="center" space="$2">
+                <YStack backgroundColor="$orange2" p="$2" borderRadius="$10">
+                  <Calendar size={24} color="$orange10" />
+                </YStack>
+                <YStack flex={1}>
+                  <Text fontSize="$5" fontWeight={600} color="$gray11">Data de Entrega</Text>
+                  <Text fontSize="$6" fontWeight={700}>
+                    {pedido.prazo_entrega ? formatDate(pedido.prazo_entrega) : 'Sem data'}
+                  </Text>
+                </YStack>
+              </XStack>
+            </YStack>
+          </Card>
+        </Animatable.View>
+
+        {/* Card de Pacotes */}
+        <Animatable.View animation="fadeInRight" duration={600} delay={300}>
+          <Card bordered p="$4" backgroundColor="$background" borderRadius="$6" elevate>
+            <YStack space="$3">
+              <XStack alignItems="center" space="$2" mb="$2">
+                <YStack backgroundColor="$purple2" p="$2" borderRadius="$10">
+                  <Package size={24} color="$purple10" />
+                </YStack>
+                <Text fontSize="$8" fontWeight={700}>Pacotes</Text>
+              </XStack>
+              
+              <YStack backgroundColor="$gray2" p="$3" borderRadius="$4">
+                <XStack justifyContent="space-between" mb="$2">
+                  <Text fontSize="$6" fontWeight={700} color="$gray11">Sabor</Text>
+                  <Text fontSize="$6" fontWeight={700} color="$gray11">Qtd</Text>
+                </XStack>
+                
+                {pacotes.map((pacote, index) => (
+                  <Animatable.View 
+                    key={index} 
+                    animation="fadeIn" 
+                    duration={400} 
+                    delay={400 + index * 100}
+                  >
+                    <YStack>
+                      <XStack justifyContent="space-between" py="$2">
+                        <Text fontSize="$5" flex={1}>🧊 GELO DE {pacote.nome}</Text>
+                        <Text fontSize="$6" fontWeight={600} color="$blue10">
+                          {pacote.quantidade}x
+                        </Text>
+                      </XStack>
+                      {index < pacotes.length - 1 && <Separator />}
+                    </YStack>
+                  </Animatable.View>
+                ))}
+                
+                <Separator my="$3" borderColor="$gray8" />
+                
+                <XStack justifyContent="space-between">
+                  <Text fontSize="$7" fontWeight={700}>Total:</Text>
+                  <Text fontSize="$7" fontWeight={700} color="$blue10">
+                    {qtd_total} pacotes
+                  </Text>
+                </XStack>
+              </YStack>
+            </YStack>
+          </Card>
+        </Animatable.View>
+
+        {/* Card de Endereço */}
+        <Animatable.View animation="fadeInRight" duration={600} delay={400}>
+          <Card bordered p="$4" backgroundColor="$background" borderRadius="$6" elevate>
+            <YStack space="$3">
+              <XStack alignItems="center" space="$2">
+                <YStack backgroundColor="$red2" p="$2" borderRadius="$10">
+                  <MapPin size={24} color="$red10" />
+                </YStack>
+                <Text fontSize="$8" fontWeight={700}>Endereço</Text>
+              </XStack>
+              
+              <YStack backgroundColor="$gray2" p="$3" borderRadius="$4">
+                <Text fontSize="$5" lineHeight="$6">
+                  {endereco || 'Endereço não disponível'}
+                </Text>
+              </YStack>
+            </YStack>
+          </Card>
+        </Animatable.View>
       </YStack>
-
-      <View my="$1" />
-      <Text fontSize={30} fontWeight={700}>Endereço</Text>
-      <View my="$3" />
-      <Text fontSize="$6">{endereco}</Text>
-    </>
+    </Animatable.View>
   );
 };

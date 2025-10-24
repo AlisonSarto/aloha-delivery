@@ -1,12 +1,14 @@
-import { Text, View, ScrollView, Card, YStack, H3, Paragraph, XStack, Button, Separator } from 'tamagui';
-import { ChevronRight, CircleUser } from '@tamagui/lucide-icons';
-import { useRouter } from 'expo-router';
+import { Text, View, YStack, H3 } from 'tamagui';
+import { router } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
-import { ActivityIndicator, RefreshControl } from 'react-native';
+import { RefreshControl } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import { router } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
+import * as Animatable from 'react-native-animatable';
+import AnimatedCard from '../../components/AnimatedCard';
+import SkeletonCard from '../../components/SkeletonCard';
 
 // Função para formatar as datas
 const formatDate = (dateString) => {
@@ -19,47 +21,6 @@ const isSameDay = (dateString) => {
   const [year, month, day] = dateString.split('-');
   const deliveryDate = new Date(year, month - 1, day);
   return today.toDateString() >= deliveryDate.toDateString();
-};
-
-const CardEntrega = ({ id, cliente, codigo, dataEntrega }) => {
-  const router = useRouter();
-
-  const handlePress = () => {
-    router.push(`/entrega/${id}`);
-  };
-
-  return (
-    <Card
-      size="$4"
-      bordered
-      m="$3"
-      my="$2"
-      flex={1}
-      pressStyle={{ scale: 0.95 }}
-      onPress={handlePress}
-    >
-      <Card.Header>
-        <XStack>
-          <CircleUser size={28} marginEnd="$2" />
-          <Paragraph size="$5" fontWeight="bold" flex={1}>
-            {cliente}
-          </Paragraph>
-          <ChevronRight />
-        </XStack>
-
-        <Separator my={15} />
-
-        <XStack>
-          <Paragraph size="$4" flex={1}>
-            Nº Pedido: {codigo}
-          </Paragraph>
-          <Paragraph size="$4">
-            Entrega: {dataEntrega ? formatDate(dataEntrega) : 'Sem data'}
-          </Paragraph>
-        </XStack>
-      </Card.Header>
-    </Card>
-  );
 };
 
 const verifMode = async () => {
@@ -136,8 +97,12 @@ export default function Entregas() {
   // Exibe carregamento inicial
   if (loading) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" bg="$background">
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View flex={1} bg="$background" pt="$4">
+        <YStack>
+          {[...Array(5)].map((_, index) => (
+            <SkeletonCard key={index} index={index} />
+          ))}
+        </YStack>
       </View>
     );
   }
@@ -145,36 +110,45 @@ export default function Entregas() {
   // Exibe erro caso haja algum problema
   if (error) {
     return (
-      <View flex={1} bg="$background" justifyContent="center" alignItems="center">
-        <Text style={{ textAlign: 'center', color: 'red' }}>{error}</Text>
-        <Button onPress={fetchEntregas}>Tentar Novamente</Button>
+      <View flex={1} bg="$background" justifyContent="center" alignItems="center" p="$4">
+        <Animatable.View animation="shake" duration={500}>
+          <Text style={{ textAlign: 'center', color: 'red', fontSize: 16 }}>{error}</Text>
+        </Animatable.View>
       </View>
     );
   }
 
   return (
-    <ScrollView
-      flex={1}
-      bg="$background"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchEntregas} />}
-    >
-      <YStack flex={1}>
-        {entregas.length > 0 ? (
-          entregas.map((entrega: any) => (
-            <CardEntrega
-              key={entrega.id}
-              id={entrega.id}
-              cliente={entrega.nome_cliente}
-              codigo={entrega.codigo}
-              dataEntrega={entrega.prazo_entrega}
+    <View flex={1} bg="$background">
+      {entregas.length > 0 ? (
+        <FlashList
+          data={entregas}
+          estimatedItemSize={100}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item, index }) => (
+            <AnimatedCard
+              key={item.id}
+              id={item.id}
+              cliente={item.nome_cliente}
+              codigo={item.codigo}
+              dataEntrega={item.prazo_entrega ? formatDate(item.prazo_entrega) : undefined}
+              onPress={() => router.push(`/entrega/${item.id}`)}
+              index={index}
             />
-          ))
-        ) : (
-          <View flex={1} justifyContent="center" alignItems="center">
-            <H3 textAlign="center">Nenhuma entrega encontrada</H3>
-          </View>
-        )}
-      </YStack>
-    </ScrollView>
+          )}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={fetchEntregas} />
+          }
+        />
+      ) : (
+        <Animatable.View 
+          animation="fadeIn" 
+          duration={600}
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        >
+          <H3 textAlign="center" color="$gray10">Nenhuma entrega encontrada</H3>
+        </Animatable.View>
+      )}
+    </View>
   );
 }

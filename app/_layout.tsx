@@ -3,6 +3,7 @@ import { Stack } from 'expo-router'
 import { TamaguiProvider } from 'tamagui'
 import { useTheme } from 'tamagui'
 import { tamaguiConfig } from '../tamagui.config'
+import { Platform } from 'react-native'
 
 export {
   ErrorBoundary,
@@ -23,17 +24,30 @@ export default function RootLayout() {
 }
 
 function AppContent() {
-  const theme = useTheme() // Now inside TamaguiProvider context
+  const theme = useTheme()
+  
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.background.val,
+        },
+        headerTintColor: theme.color.val,
+        headerTitleStyle: {
+          fontSize: 18,
+          fontWeight: '700',
+        },
+        animation: 'slide_from_right',
+        contentStyle: {
+          backgroundColor: theme.background.val,
+        },
+      }}
+    >
       <Stack.Screen
         name="(tabs)"
         options={{
           title: 'Aloha Delivery',
           headerShown: false,
-          contentStyle: {
-            backgroundColor: theme.background.val,
-          },
         }}
       />
       <Stack.Screen
@@ -41,21 +55,22 @@ function AppContent() {
         options={{
           title: 'Em rota',
           headerShown: false,
-          contentStyle: {
-            backgroundColor: theme.background.val,
-          },
         }}
       />
       <Stack.Screen
         name="entrega/[id]"
         options={{
-          title: 'Detalhes do pedido',
+          title: 'Detalhes da Entrega',
           presentation: 'card',
           animation: 'slide_from_right',
           gestureEnabled: true,
           gestureDirection: 'horizontal',
-          contentStyle: {
+          headerStyle: {
             backgroundColor: theme.background.val,
+          },
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: '700',
           },
         }}
       />

@@ -1,34 +1,19 @@
 import { 
-  Text, View, ScrollView, Card, YStack, H3, Paragraph, XStack, Button, Separator, 
-  H2
+  Text, View, YStack, H2, Button, H3 
 } from 'tamagui';
-import { ChevronRight, CircleUser } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
-import { Linking } from 'react-native';
+import { RefreshControl } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useCallback } from 'react';
-import { ActivityIndicator, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
+import * as Animatable from 'react-native-animatable';
+import AnimatedCard from '../components/AnimatedCard';
+import SkeletonCard from '../components/SkeletonCard';
 
 // Componente de cada cartão de entrega
-const CardEntrega = ({ id, cliente }: { id: number, cliente: string }) => {
-  const router = useRouter();
-
-  return (
-    <Card size="$4" bordered m="$3" my="$2" flex={1} pressStyle={{ scale: 0.95 }} onPress={() => router.push(`/entrega/${id}`)}>
-      <Card.Header>
-        <XStack>
-          <CircleUser size={28} marginEnd="$2" />
-          <Paragraph size="$5" fontWeight="bold" flex={1}>{cliente}</Paragraph>
-          <ChevronRight />
-        </XStack>
-      </Card.Header>
-    </Card>
-  );
-};
-
 const finishEntregas = async () => {
   var modo = await AsyncStorage.getItem('modo') ?? '1'
 
@@ -98,37 +83,96 @@ export default function Entregas() {
 
   if (loading) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" bg="$background">
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View flex={1} bg="$background" pt="$4">
+        <Animatable.View animation="fadeIn" duration={400}>
+          <H2 textAlign="center" mt="$3" mb="$4" color="$blue10">🚚 Em Rota</H2>
+        </Animatable.View>
+        <YStack>
+          {[...Array(3)].map((_, index) => (
+            <SkeletonCard key={index} index={index} />
+          ))}
+        </YStack>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View flex={1} justifyContent="center" alignItems="center" bg="$background">
-        <Text color="red">{error}</Text>
-        <Button onPress={fetchEntregas}>Tentar Novamente</Button>
+      <View flex={1} justifyContent="center" alignItems="center" bg="$background" p="$4">
+        <Animatable.View animation="shake" duration={500}>
+          <Text color="red" textAlign="center" fontSize={16}>{error}</Text>
+        </Animatable.View>
       </View>
     );
   }
 
   return (
     <>
-      <H3 textAlign="center" mt="$3" mb="$2">Em rota</H3>
-      <ScrollView flex={1} bg="$background" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchEntregas} />}>
-        <YStack flex={1}>
-          {entregas.length > 0 ? (
-            entregas.map((entrega) => (
-              <CardEntrega key={entrega.id} id={entrega.id} cliente={entrega.nome_cliente} />
-            ))
-          ) : (
-            <View flex={1} justifyContent="center" alignItems="center">
-              <H3 textAlign="center">Nenhuma entrega encontrada</H3>
-            </View>
+      <Animatable.View animation="slideInDown" duration={600}>
+        <View bg="$blue2" py="$3" borderBottomWidth={2} borderBottomColor="$blue6">
+          <H2 textAlign="center" color="$blue11">🚚 Em Rota</H2>
+          {entregas.length > 0 && (
+            <Text textAlign="center" fontSize="$5" color="$blue10" mt="$1">
+              {entregas.length} {entregas.length === 1 ? 'entrega' : 'entregas'} pendente{entregas.length === 1 ? '' : 's'}
+            </Text>
           )}
-        </YStack>
-      </ScrollView>
+          <View px="$4" mt="$3">
+            <Button 
+              size="$3" 
+              backgroundColor="$red9"
+              pressStyle={{ backgroundColor: '$red10', scale: 0.98 }}
+              onPress={finishEntregas}
+              borderRadius="$8"
+            >
+              <Button.Text fontWeight={600}>❌ Sair do modo em rotas</Button.Text>
+            </Button>
+          </View>
+        </View>
+      </Animatable.View>
+
+      <View flex={1} bg="$background">
+        {entregas.length > 0 ? (
+          <FlashList
+            data={entregas}
+            estimatedItemSize={100}
+            renderItem={({ item, index }) => (
+              <AnimatedCard
+                key={item.id}
+                id={item.id}
+                cliente={item.nome_cliente}
+                onPress={() => router.push(`/entrega/${item.id}`)}
+                index={index}
+              />
+            )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={fetchEntregas} />
+            }
+          />
+        ) : (
+          <Animatable.View 
+            animation="fadeIn" 
+            duration={600}
+            style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}
+          >
+            <Text fontSize={60} mb="$4">✅</Text>
+            <H3 textAlign="center" color="$gray10" mb="$2">
+              Todas as entregas foram finalizadas!
+            </H3>
+            <Animatable.View animation="pulse" iterationCount="infinite" duration={2000}>
+              <Button 
+                size="$5" 
+                backgroundColor="$green9"
+                pressStyle={{ backgroundColor: '$green10', scale: 0.98 }}
+                onPress={finishEntregas}
+                mt="$4"
+                borderRadius="$10"
+              >
+                <Button.Text fontWeight={700}>🏠 Voltar ao início</Button.Text>
+              </Button>
+            </Animatable.View>
+          </Animatable.View>
+        )}
+      </View>
     </>
   );
 }
